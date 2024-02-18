@@ -12,7 +12,6 @@ const Wrapper = styled(Box)({
 const RecentTransactions = ({ recentTransactions }) => {
   const [objToEdit, setObjToEdit] = useState({});
   const [isOpenEditModel, setIsOpenEditModel] = useState(false);
-
   return (
     <>
     <EditValueModel isOpen={isOpenEditModel} setIsOpen={setIsOpenEditModel} currentValues={objToEdit}/>

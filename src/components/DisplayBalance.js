@@ -4,7 +4,6 @@ import { connect } from "react-redux";
 
 
 const DisplayBalance = ({balance, expense}) => {
-
   return (
     <Box
       sx={{

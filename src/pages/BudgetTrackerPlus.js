@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
-import {  Button, ButtonGroup, Paper, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { Button, ButtonGroup, Paper, Typography } from "@mui/material";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import DisplayBalance from "../components/DisplayBalance";
 import RecentTransactions from "../components/RecentTransactions";
 import { addBalance, addExpense } from "../store/actions/expenseTracker";
@@ -18,52 +18,64 @@ const PaperWrapper = styled(Paper)({
   margin:'20px 0' 
 });
 
-const BudgetTrackerPlus = ({balance}) => {
-  const [isOpenAmoutModel, setIsOpneAmountModel] = useState(false);
-  const [isOpenExpenseModel, setIsOpneExpenseModel] = useState(false);
+const BudgetTrackerPlus = ({ balance }) => {
+  const [isOpenAmountModel, setIsOpenAmountModel] = useState(false);
+  const [isOpenExpenseModel, setIsOpenExpenseModel] = useState(false);
   const [alertMsg, setAlertMsg] = useState("");
-  const dispatch = useDispatch()
-  
-  useEffect(()=>{
-    if(alertMsg){
-      setTimeout(()=>{
-      setAlertMsg("")
-      }, 3000)
-    }
-  }, [alertMsg])
+  const dispatch = useDispatch();
 
-  const handleSubmitAmountModel = (obj)=>{
-    dispatch(addBalance(obj.amount))
-    dispatch(addRecentTrasaction({isExpense: false,  description:obj.description, amount : obj.amount}))
-    setAlertMsg("Amount has been added!")
-    setIsOpneAmountModel(false)
-  }
+  useEffect(() => {
+    if (alertMsg) {
+      setTimeout(() => {
+        setAlertMsg("");
+      }, 3000);
+    }
+  }, [alertMsg]);
 
-  const handleSubmitExpenseModel = (obj)=>{
-    const hasSuffientBalance = (balance - obj.amount)>=0
-    if(hasSuffientBalance){
-      dispatch(addExpense(obj.amount))
-      dispatch(addRecentTrasaction({isExpense: true,  description:obj.description, amount : obj.amount}))
-      setAlertMsg("Expense has been added!")
+  const handleSubmitAmountModel = useCallback((obj) => {
+    dispatch(addBalance(obj.amount));
+    dispatch(addRecentTrasaction({ isExpense: false, description: obj.description, amount: obj.amount }));
+    setAlertMsg("Amount has been added!");
+    setIsOpenAmountModel(false);
+  }, [dispatch]);
+
+  const handleSubmitExpenseModel = useCallback((obj) => {
+    const hasSufficientBalance = (balance - obj.amount) >= 0;
+    if (hasSufficientBalance) {
+      dispatch(addExpense(obj.amount));
+      dispatch(addRecentTrasaction({ isExpense: true, description: obj.description, amount: obj.amount }));
+      setAlertMsg("Expense has been added!");
+    } else {
+      setAlertMsg("Insufficient Balance!");
     }
-    else{
-      setAlertMsg("Insufficient Balance!")
-    }
-    setIsOpneExpenseModel(false)
-  }
+    setIsOpenExpenseModel(false);
+  }, [balance, dispatch]);
+
+  const handleOpenAmountModel = useCallback(() => {
+    setIsOpenAmountModel(true);
+  }, []);
+
+  const handleOpenExpenseModel = useCallback(() => {
+    setIsOpenExpenseModel(true);
+  }, []);
+
+  const memoizedAlertMessageComponent = useMemo(() => {
+    return alertMsg && <AlertMessageComponent message={alertMsg} />;
+  }, [alertMsg]);
+
   return (
     <>
-    {alertMsg && <AlertMessageComponent message= {alertMsg}/>}
-    <AddValueModel isOpen={isOpenAmoutModel} setIsOpen={setIsOpneAmountModel} buttonLabel={'Add amount'} handleSubmit={handleSubmitAmountModel}/>
-    <AddValueModel isOpen={isOpenExpenseModel} setIsOpen={setIsOpneExpenseModel} buttonLabel={'Add Expense'} handleSubmit={handleSubmitExpenseModel}/>
+      {memoizedAlertMessageComponent}
+      <AddValueModel isOpen={isOpenAmountModel} setIsOpen={setIsOpenAmountModel} buttonLabel={'Add amount'} handleSubmit={handleSubmitAmountModel} />
+      <AddValueModel isOpen={isOpenExpenseModel} setIsOpen={setIsOpenExpenseModel} buttonLabel={'Add Expense'} handleSubmit={handleSubmitExpenseModel} />
       <PaperWrapper>
         <Typography variant="h4">Expense Tracker</Typography>
         <DisplayBalance />
         <ButtonGroup sx={{ display: "flex", flexDirection: "column" }}>
-          <Button variant="contained" sx={{ mt: "15px", height: 50 }} onClick={()=>setIsOpneAmountModel(true)}>
+          <Button variant="contained" sx={{ mt: "15px", height: 50 }} onClick={handleOpenAmountModel}>
             Add amount
           </Button>
-          <Button variant="contained" sx={{ mt: "15px", height: 50 }} onClick={()=>setIsOpneExpenseModel(true)}>
+          <Button variant="contained" sx={{ mt: "15px", height: 50 }} onClick={handleOpenExpenseModel}>
             Add Expense
           </Button>
         </ButtonGroup>
@@ -72,8 +84,9 @@ const BudgetTrackerPlus = ({balance}) => {
     </>
   );
 };
-const mapStoreStateToProps = ({expenseTracker})=>{
-  return {...expenseTracker}
-}
+
+const mapStoreStateToProps = ({ expenseTracker }) => {
+  return { ...expenseTracker };
+};
 
 export default connect(mapStoreStateToProps)(BudgetTrackerPlus);

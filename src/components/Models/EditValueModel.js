@@ -1,6 +1,6 @@
 import { Close } from "@mui/icons-material";
 import { Box, Button, IconButton, Modal } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import InputFieldsWithLabel from "../InputField";
 import { updateRecentTrasaction } from "../../store/actions/recentTransactionsActions";
 import { useDispatch, useSelector } from "react-redux";
@@ -22,24 +22,27 @@ const style = {
 };
 
 const EditValueModel = ({ isOpen, setIsOpen, currentValues }) => {
-  const balance = useSelector((state) => state.expenseTracker).balance;
+  const balance = useSelector((state) => state.expenseTracker.balance);
   const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState("");
   const [alert, setAlert] = useState(false);
   const dispatch = useDispatch();
-  const handleAmountChange = (val) => {
+
+  const handleAmountChange = useCallback((val) => {
     setAmount(val);
-  };
-  const handleDescriptionChange = (val) => {
+  }, []);
+
+  const handleDescriptionChange = useCallback((val) => {
     setDescription(val);
-  };
-  const onSubmit = () => {
+  }, []);
+
+  const onSubmit = useCallback(() => {
     if (amount && description) {
       setAmount(0);
       setDescription("");
       setIsOpen(false);
       const balanceGreaterThanZero = eval(
-        `balance + ${currentValues.amount} - ${amount}`
+        `${balance} + ${currentValues.amount} - ${amount}`
       );
       if (balanceGreaterThanZero >= 0) {
         dispatch(updateExpense(amount - currentValues.amount));
@@ -54,7 +57,8 @@ const EditValueModel = ({ isOpen, setIsOpen, currentValues }) => {
         setAlert(true);
       }
     }
-  };
+  }, [amount, balance, currentValues, description, dispatch, setIsOpen]);
+
   useEffect(() => {
     setAmount(currentValues.amount);
     setDescription(currentValues.description);
@@ -63,28 +67,26 @@ const EditValueModel = ({ isOpen, setIsOpen, currentValues }) => {
   useEffect(() => {
     if (alert) {
       setTimeout(() => {
-        setAlert("");
+        setAlert(false);
       }, 3000);
     }
   }, [alert]);
+
+  const memoizedAlertMessageComponent = useMemo(() => {
+    return alert && <AlertMessageComponent message={"Transaction failed (balance can't be negative)"} />;
+  }, [alert]);
+
   return (
     <>
-      {alert && (
-        <AlertMessageComponent
-          message={"Transaction failed (balance cant be negative!"}
-        />
-      )}
+      {memoizedAlertMessageComponent}
       <Modal
         open={isOpen}
-        onClose={setIsOpen}
+        onClose={() => setIsOpen(false)}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <IconButton
-            sx={{ alignSelf: "end" }}
-            onClick={() => setIsOpen(false)}
-          >
+          <IconButton sx={{ alignSelf: "end" }} onClick={() => setIsOpen(false)}>
             <Close />
           </IconButton>
           <InputFieldsWithLabel

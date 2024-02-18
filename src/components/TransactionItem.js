@@ -21,8 +21,10 @@ const TransactionItem = ({
           width: "100%",
         }}
         onClick={() => {
-          setObjToEdit({ isExpense, description, amount, index });
-          if(isExpense)setIsOpenEditModel(true);
+          if(isExpense){
+            setIsOpenEditModel(true);
+            setObjToEdit({ isExpense, description, amount, index });
+          }
         }}
       >
         <Box display={"flex"} sx={{alignItems:'center'}}>

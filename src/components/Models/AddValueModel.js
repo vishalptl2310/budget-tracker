@@ -20,7 +20,7 @@ const style = {
 const AddValueModel = ({isOpen ,setIsOpen, buttonLabel, handleSubmit}) => {
   const [amount, setAmount] = useState(0);
   const [description, setDescription] = useState("");
-
+  
   const handleAmountChange = (val)=>{
     setAmount(val)
   }
@@ -72,4 +72,4 @@ const AddValueModel = ({isOpen ,setIsOpen, buttonLabel, handleSubmit}) => {
   );
 };
 
-export default AddValueModel;
+export default React.memo(AddValueModel);
